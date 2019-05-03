@@ -55,7 +55,7 @@ class User(UserMixin,db.Model):
         own = Tweet.query.filter_by(user_id=self.id)
         return followed.union(own).order_by(Tweet.create_time.desc())
        
-        
+        #nothing
 class Tweet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(140))
