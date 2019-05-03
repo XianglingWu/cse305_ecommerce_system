@@ -54,11 +54,8 @@ class User(UserMixin,db.Model):
                 followers.c.follower_id == self.id)
         own = Tweet.query.filter_by(user_id=self.id)
         return followed.union(own).order_by(Tweet.create_time.desc())
+       
         
-        
-@login_manager.user_loader
-def load_user(id):
-    return User.query.get(int(id))
 class Tweet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(140))
@@ -69,3 +66,74 @@ class Tweet(db.Model):
         return 'id={}, tweet={}, create at={}, user_id={}'.format(
             self.id,self.body,self.create_time,self.user_id
         )
+
+@login_manager.user_loader
+def load_user(id):
+    return User.query.get(int(id))
+
+
+class Card(db.Model):
+    UserId = db.Column(db.Integer, db.ForeignKey('user.id'))
+    CardNumber = db.Column(db.String(16),primary_key=True)
+    ExpirDate = db.Column(db.String(5),nullable=False)
+    CardType = db.Column(db.String(6),nullable=False)
+    Company = db.Column(db.String(10),nullable=False)
+
+    def __repr__(self):
+       return 'UserId={}, CardNumber={}, ExpirDate={}, CardType={},Company={}'.format(
+           self.UserId,self.CardNumber,self.ExpirDate,self.CardType,self.Company
+       )
+
+class Seller(db.Model):
+    SellerId = db.Column(db.Integer, primary_key=True)
+    SellerName = db.Column(db.String(64),nullable=False)
+    Address = db.Column(db.String(64),nullable=False)
+    PhoneNumber = db.Column(db.String(64),unique=True,nullable=False)
+    Rating = db.Column(db.Float)
+    
+    def __repr__(self):
+       return 'UserId={}, CardNumber={}, ExpirDate={}, CardType={},Company={}'.format(
+           self.UserId,self.CardNumber,self.ExpirDate,self.CardType,self.Company
+       )
+
+class Product(db.Model):
+    SellerId = db.Column(db.Integer,db.ForeignKey('seller.SellerId'),primary_key=True)
+    ProductId = db.Column(db.Integer,unique=True,primary_key=True)
+    ProductName = db.Column(db.String(64),nullable=False)
+    Descriptions = db.Column(db.String(256),nullable=False)
+    Price = db.Column(db.Float)
+    Category  = db.Column(db.String(256),nullable=False)
+    Rating  = db.Column(db.Float,default=0)
+    
+    
+    def __repr__(self):
+       return 'SellerId={}, ProductId={}, ProductName={}, Descriptions={}, Price={}, Category={}, Rating={}'.format(
+           self.SellerId,self.ProductId,self.ProductName,self.Descriptions,self.Price,self.Category,self.Rating
+       )
+
+class ShoppingCart(db.Model):
+    # Don't need cardId. A user has an unique cart.
+    UserId = db.Column(db.Integer,db.ForeignKey('user.id'))
+    ProductId = db.Column(db.Integer,db.ForeignKey('product.ProductId'),primary_key=True)
+    Quantity = db.Column(db.Integer,nullable=False)
+    Price  = db.Column(db.Double,default=0,nullable=False)
+    
+    
+    def __repr__(self):
+       return 'ProductId={}, Quantity={}, UserId={}, Price={}'.format(
+           self.ProductId,self.Quantity,self.UserId,self.Price
+       )
+
+class Order(db.Model):
+    ProductId = db.relationship('Product',backref='order',lazy=True)
+    OrderNumber = db.Column(db.Integer,primary_key=True)
+    Quantity = db.Column(db.Integer)
+    #Discount = db.Column(db.Integer,default=0)
+    #status: 'U'=Unpaid,'P'=Paid,'D'=Delivered,'C'=Cancelled,'R'=Return
+    Status = db.Column(db.String(1),default='U')
+    
+    def __repr__(self):
+       return 'ProductId={},Quantity={}, OrderNumber={}, Status={}'.format(
+           self.ProductId,self.Quantity,self.OrderNumber,self.Status
+       )
+
